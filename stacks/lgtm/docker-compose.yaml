@@ -3,7 +3,7 @@ services:
     image: grafana/tempo:latest
     command: [ "-config.file=/etc/tempo.yaml" ]
     volumes:
-      - ./config/tempo/config.yaml:/etc/tempo.yaml:ro
+      - ../../config/tempo/config.yaml:/etc/tempo.yaml:ro
       - tempo-data:/var/tempo
     networks:
       - observability
@@ -15,7 +15,7 @@ services:
     image: grafana/loki:latest
     command: [ "-config.file=/etc/loki/config.yaml" ]
     volumes:
-      - ./config/loki/config.yaml:/etc/loki/config.yaml:ro
+      - ../../config/loki/config.yaml:/etc/loki/config.yaml:ro
       - loki-data:/loki
     networks:
       - observability
@@ -25,7 +25,7 @@ services:
     image: grafana/mimir:latest
     command: [ "-config.file=/etc/mimir.yaml" ]
     volumes:
-      - ./config/mimir/config.yaml:/etc/mimir.yaml:ro
+      - ../../config/mimir/config.yaml:/etc/mimir.yaml:ro
       - mimir-data:/data
     networks:
       - observability
@@ -35,7 +35,7 @@ services:
     image: grafana/agent:latest
     command: [ "-config.file=/etc/agent/config.yaml" ]
     volumes:
-      - ./config/grafana_agent/config.yaml:/etc/agent/config.yaml:ro
+      - ../../config/grafana_agent/config.yaml:/etc/agent/config.yaml:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - grafana-agent-data:/tmp
     networks:
@@ -48,8 +48,8 @@ services:
   grafana:
     image: grafana/grafana:latest
     volumes:
-      - ./config/grafana/provisioning/datasources/lgtm.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
-      - ./config/grafana/grafana.ini:/etc/grafana/grafana.ini:ro
+      - ../../config/grafana/provisioning/datasources/lgtm.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
+      - ../../config/grafana/grafana.ini:/etc/grafana/grafana.ini:ro
       - grafana-data:/var/lib/grafana
     ports:
       - "3456:3000"
