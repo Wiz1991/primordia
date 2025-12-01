@@ -1,0 +1,77 @@
+// OTLP receiver for traces and metrics
+otelcol.receiver.otlp "default" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+
+  output {
+    metrics = [otelcol.processor.batch.default.input]
+    traces  = [otelcol.processor.batch.default.input]
+  }
+}
+
+// Batch processor for efficiency
+otelcol.processor.batch "default" {
+  output {
+    metrics = [otelcol.exporter.prometheus.mimir.input]
+    traces  = [otelcol.exporter.otlp.tempo.input]
+  }
+}
+
+// Export traces to Tempo
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = "tempo:4317"
+    tls {
+      insecure = true
+    }
+  }
+}
+
+// Export OTLP metrics to Mimir (Prometheus remote write)
+otelcol.exporter.prometheus "mimir" {
+  forward_to = [prometheus.remote_write.mimir.receiver]
+}
+
+prometheus.remote_write "mimir" {
+  endpoint {
+    url = "http://mimir:9009/api/v1/push"
+  }
+}
+
+// Prometheus scraping: Docker service discovery
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+
+  // Optional: filter containers with specific label
+  // Uncomment to require prometheus.scrape=true label
+  // filter {
+  //   name   = "label"
+  //   values = ["prometheus.scrape=true"]
+  // }
+}
+
+// Scrape discovered containers
+prometheus.scrape "docker_containers" {
+  targets    = discovery.docker.containers.targets
+  forward_to = [prometheus.remote_write.mimir.receiver]
+
+  // Default scrape config
+  scrape_interval = "15s"
+  scrape_timeout  = "10s"
+
+  // Relabeling to extract metadata
+  relabel_rule {
+    source_labels = ["__meta_docker_container_name"]
+    target_label  = "container_name"
+  }
+
+  relabel_rule {
+    source_labels = ["__meta_docker_container_image"]
+    target_label  = "container_image"
+  }
+}

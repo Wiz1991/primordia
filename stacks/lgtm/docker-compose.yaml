@@ -31,18 +31,37 @@ services:
       - observability
     restart: unless-stopped
 
-  grafana-agent:
-    image: grafana/agent:latest
-    command: [ "-config.file=/etc/agent/config.yaml" ]
+  vector:
+    image: timberio/vector:0.51.1-debian
+    container_name: vector
+    command: [ "--config", "/etc/vector/vector.yaml" ]
     volumes:
-      - ../../config/grafana_agent/config.yaml:/etc/agent/config.yaml:ro
+      - ../../config/vector/vector.yaml:/etc/vector/vector.yaml:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - grafana-agent-data:/tmp
+      - vector-data:/var/lib/vector
+    networks:
+      - observability
+    depends_on:
+      - loki
+    restart: unless-stopped
+
+  alloy:
+    image: grafana/alloy:latest
+    container_name: alloy
+    command: [ "run", "--server.http.listen-addr=0.0.0.0:12345", "--storage.path=/var/lib/alloy", "/etc/alloy/config.alloy" ]
+    volumes:
+      - ../../config/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - alloy-data:/var/lib/alloy
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "12345:12345"
     networks:
       - observability
     depends_on:
       - tempo
-      - loki
+      - mimir
     restart: unless-stopped
 
   grafana:
@@ -70,4 +89,5 @@ volumes:
   loki-data:
   mimir-data:
   grafana-data:
-  grafana-agent-data:
+  vector-data:
+  alloy-data:
