@@ -31,42 +31,35 @@ logs:
                 - name: label
                   values: [ "service.name" ]
 
-      relabel_configs:
-        - source_labels: [ __meta_docker_container_label_service_name ]
-          regex: .+
-          target_label: service
+          relabel_configs:
+            - source_labels: [ __meta_docker_container_label_service_name ]
+              regex: .+
+              target_label: service
 
           pipeline_stages:
-            # Parse JSON logs
+            # Parse JSON logs - extract ALL fields
             - json:
                 expressions:
                   timestamp: timestamp
                   level: level
-                  message: message
-                  env: env
                   service: service
-                  queue: queue
-                  jobId: jobId
-                  traceId: traceId
-                  spanId: spanId
-                  host: host
-                  pid: pid
+                  env: env
 
             # Use timestamp from log if available
             - timestamp:
                 source: timestamp
                 format: RFC3339
 
-            # Promote to labels (low cardinality only)
+            # Promote LOW CARDINALITY fields to labels (for fast filtering)
             - labels:
                 level:
                 service:
-                queue:
                 env:
 
-            # Set message as the log line
-            - output:
-                source: message
+            # DO NOT use output stage - keep the raw JSON log line
+            # This way Grafana's "Detected fields" will show ALL your JSON fields
+            # You can click on any log to see all fields expanded
+            # To filter by a field, use: {service="ingestion"} | json | jobId="123"
 
       clients:
         - url: http://loki:3100/loki/api/v1/push
