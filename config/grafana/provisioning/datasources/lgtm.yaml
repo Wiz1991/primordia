@@ -12,7 +12,7 @@ datasources:
       derivedFields:
         - datasourceUid: tempo
           matcherRegex: "traceId[\":]\\s*([a-f0-9]+)"
-          name: TraceID
+          name: trace_id
           url: "$${__value.raw}"
 
   - name: Tempo
@@ -30,14 +30,14 @@ datasources:
         filterBySpanID: false
         tags:
           - key: service.name
-            value: service
+            value: container_name
       tracesToMetrics:
         datasourceUid: mimir
         spanStartTimeShift: -1h
         spanEndTimeShift: 1h
         tags:
           - key: service.name
-            value: service
+            value: container_name
         queries:
           - name: Request Rate
             query: 'sum(rate(traces_spanmetrics_calls_total{$$__tags}[$$__rate_interval]))'
@@ -64,4 +64,4 @@ datasources:
       timeInterval: 30s
       exemplarTraceIdDestinations:
         - datasourceUid: tempo
-          name: TraceID
+          name: trace_id

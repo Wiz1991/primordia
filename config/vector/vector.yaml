@@ -1,0 +1,85 @@
+# Data directory for Vector state
+data_dir: /var/lib/vector
+
+# Docker logs source with hybrid filtering
+sources:
+  docker_logs:
+    type: docker_logs
+    docker_host: unix:///var/run/docker.sock
+
+    # Hybrid approach: collect all containers by default
+    # Containers can opt-out with label: vector.logs.exclude=true
+    exclude_labels:
+      - "vector.logs.exclude=true"
+
+    # Auto-merge split messages >16kb
+    auto_partial_merge: true
+
+# JSON parsing and label extraction transform
+transforms:
+  parse_and_label:
+    type: remap
+    inputs:
+      - docker_logs
+    source: |
+      # Parse JSON logs - if parsing fails, keep raw message
+      parsed, err = parse_json(.message)
+
+      if err == null {
+        # Extract env and level from JSON for labels
+        .labels.env = parsed.env
+        .labels.level = parsed.level
+
+        # Keep parsed JSON as the message (or extract specific field)
+        .message = encode_json(parsed)
+      } else {
+        # JSON parsing failed - mark with label and keep raw message
+        .labels.level = "unknown"
+        .labels.env = "unknown"
+      }
+
+      # Extract container metadata as labels
+      .labels.container_name = .container_name
+      .labels.container_image = .image
+
+      # Extract image tag from full image string (e.g., "nginx:1.21" -> "1.21")
+      image_parts = split(.image, ":")
+      if length(image_parts) > 1 {
+        .labels.image_tag = image_parts[1]
+      } else {
+        .labels.image_tag = "latest"
+      }
+
+      # Keep traceId in message for correlation (don't promote to label - high cardinality)
+      # Loki/Grafana will extract it for trace linking
+
+# Loki sink
+sinks:
+  loki:
+    type: loki
+    inputs:
+      - parse_and_label
+    endpoint: http://loki:3100
+
+    # Map labels to Loki labels
+    labels:
+      env: "{{ labels.env }}"
+      level: "{{ labels.level }}"
+      container_name: "{{ labels.container_name }}"
+      container_image: "{{ labels.container_image }}"
+      image_tag: "{{ labels.image_tag }}"
+
+    # Encoding and compression
+    encoding:
+      codec: json
+
+    compression: snappy
+
+    # Handle out-of-order logs
+    out_of_order_action: accept
+
+    # Batching configuration
+    batch:
+      timeout_secs: 1
+      max_events: 100000
+      max_bytes: 1048576
