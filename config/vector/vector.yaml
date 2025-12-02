@@ -31,6 +31,11 @@ transforms:
       if err == null {
         # Merge parsed JSON fields to root level
         . = merge(., parsed) ?? .
+
+        # Ensure .message is the text from parsed.message, not the original JSON string
+        if exists(parsed.message) {
+          .message = to_string(parsed.message)
+        }
       }
 
       # Restore and store container metadata (merge may have overwritten)
@@ -44,20 +49,10 @@ transforms:
       # Extract service name from IMAGE (e.g., "registry.com/ingestion:latest" -> "ingestion")
       image_without_tag = get(image_parts, [0]) ?? image_original
       path_parts = split(image_without_tag, "/") ?? []
-      .service = get(path_parts, [-1]) ?? image_without_tag
+      service_extracted = get(path_parts, [-1]) ?? image_without_tag
+      .service_name = service_extracted
+      .service = service_extracted
 
-      # Add OCI image labels to the root
-      if exists(.label."org.opencontainers.image.version") {
-        .image_version = .label."org.opencontainers.image.version"
-      }
-
-      if exists(.label."org.opencontainers.image.revision") {
-        .image_revision = .label."org.opencontainers.image.revision"
-      }
-
-      if exists(.label."org.opencontainers.image.created") {
-        .image_created = .label."org.opencontainers.image.created"
-      }
 
       # Ensure defaults for label extraction
       .env = .env ?? "unknown"
@@ -75,16 +70,7 @@ sinks:
     labels:
       env: "{{ env }}"
       level: "{{ level }}"
-      service_name: "{{ service }}"
-
-    # Structured metadata (high cardinality container info)
-    structured_metadata:
-      image_version: "{{ image_version }}"
-      image_revision: "{{ image_revision }}"
-      image_created: "{{ image_created }}"
-      container_name: "{{ container_name_meta }}"
-      container_image: "{{ container_image_meta }}"
-      image_tag: "{{ image_tag }}"
+      service_name: "{{ service_name }}"
 
     # Encoding and compression
     encoding:
