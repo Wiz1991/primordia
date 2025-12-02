@@ -1,28 +1,93 @@
+// Docker container discovery
+// Discovers containers with the label "telemetry.enabled=true"
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+  refresh_interval = "5s"
+
+  filter {
+    name = "label"
+    values = ["telemetry.enabled=true"]
+  }
+}
+
+// Collect logs from discovered containers
+loki.source.docker "default" {
+  host = "unix:///var/run/docker.sock"
+  targets = discovery.docker.containers.targets
+  forward_to = [loki.process.json_logs.receiver]
+  refresh_interval = "5s"
+}
+
+// Process JSON logs
+loki.process "json_logs" {
+  forward_to = [loki.write.loki_endpoint.receiver]
+
+  // Parse the JSON log line
+  stage.json {
+    expressions = {
+      env     = "env",
+      level   = "level",
+      message = "message",
+    }
+  }
+
+  // Extract env and level as labels
+  stage.labels {
+    values = {
+      env   = "env",
+      level = "level",
+    }
+  }
+
+  // Keep the original log line as output (includes all structured fields)
+  // If you want only the message, uncomment the stage.output block below
+  // stage.output {
+  //   source = "message"
+  // }
+}
+
+// Write logs to Loki
+loki.write "loki_endpoint" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+
+    // Batch configuration for performance
+    batch_size = "1MiB"
+    batch_wait = "1s"
+  }
+}
+
 // OTLP receiver for traces and metrics
 otelcol.receiver.otlp "default" {
+  // gRPC endpoint for OTLP
   grpc {
     endpoint = "0.0.0.0:4317"
   }
 
+  // HTTP endpoint for OTLP
   http {
     endpoint = "0.0.0.0:4318"
   }
 
   output {
-    metrics = [otelcol.processor.batch.default.input]
-    traces  = [otelcol.processor.batch.default.input]
-  }
-}
-
-// Batch processor for efficiency
-otelcol.processor.batch "default" {
-  output {
-    metrics = [otelcol.exporter.prometheus.mimir.input]
+    metrics = [otelcol.exporter.prometheus.default.input]
     traces  = [otelcol.exporter.otlp.tempo.input]
   }
 }
 
-// Export traces to Tempo
+// Convert OTLP metrics to Prometheus format
+otelcol.exporter.prometheus "default" {
+  forward_to = [prometheus.remote_write.mimir.receiver]
+}
+
+// Send metrics to Mimir
+prometheus.remote_write "mimir" {
+  endpoint {
+    url = "http://mimir:9009/api/v1/push"
+  }
+}
+
+// Export OTLP traces to Tempo
 otelcol.exporter.otlp "tempo" {
   client {
     endpoint = "tempo:4317"
@@ -30,52 +95,4 @@ otelcol.exporter.otlp "tempo" {
       insecure = true
     }
   }
-}
-
-// Export OTLP metrics to Mimir (Prometheus remote write)
-otelcol.exporter.prometheus "mimir" {
-  forward_to = [prometheus.remote_write.mimir.receiver]
-}
-
-prometheus.remote_write "mimir" {
-  endpoint {
-    url = "http://mimir:9009/api/v1/push"
-  }
-}
-
-// Prometheus scraping: Docker service discovery
-discovery.docker "containers" {
-  host = "unix:///var/run/docker.sock"
-
-  // Optional: filter containers with specific label
-  // Uncomment to require prometheus.scrape=true label
-  // filter {
-  //   name   = "label"
-  //   values = ["prometheus.scrape=true"]
-  // }
-}
-
-// Relabel to extract Docker metadata
-prometheus.relabel "docker_metadata" {
-  forward_to = [prometheus.remote_write.mimir.receiver]
-
-  rule {
-    source_labels = ["__meta_docker_container_name"]
-    target_label  = "container_name"
-  }
-
-  rule {
-    source_labels = ["__meta_docker_container_image"]
-    target_label  = "container_image"
-  }
-}
-
-// Scrape discovered containers
-prometheus.scrape "docker_containers" {
-  targets    = discovery.docker.containers.targets
-  forward_to = [prometheus.relabel.docker_metadata.receiver]
-
-  // Default scrape config
-  scrape_interval = "15s"
-  scrape_timeout  = "10s"
 }
