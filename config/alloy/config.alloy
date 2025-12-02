@@ -21,8 +21,29 @@ discovery.relabel "docker_logs" {
     action = "replace"
   }
 
-  // First, set service to full image name without tag as fallback
-  // Removes everything after ':' to strip the tag
+  // For Docker Swarm: use swarm service name as service label
+  // Note: Alloy converts dots to underscores in label names
+  // com.docker.swarm.service.name -> com_docker_swarm_service_name
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_swarm_service_name"]
+    regex = "(.+)"
+    replacement = "$1"
+    target_label = "service"
+    action = "replace"
+  }
+
+  // For Docker Compose: use compose service name
+  // com.docker.compose.service -> com_docker_compose_service
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    regex = "(.+)"
+    replacement = "$1"
+    target_label = "service"
+    action = "replace"
+  }
+
+  // Fallback: extract from image name without tag
+  // Only applies if service label wasn't set by above rules
   rule {
     source_labels = ["__meta_docker_container_image"]
     regex = "([^:]+):.*"
@@ -31,9 +52,9 @@ discovery.relabel "docker_logs" {
     action = "replace"
   }
 
-  // Then extract just the service name if image matches the registry pattern
+  // Override with just service name if image matches registry pattern
   // Format: r2-registry-production.randomanga.workers.dev/ingestion:latest
-  // Extract: ingestion (overrides the fallback if it matches)
+  // Extract: ingestion
   rule {
     source_labels = ["__meta_docker_container_image"]
     regex = ".*/([^:]+):.*"
@@ -42,6 +63,21 @@ discovery.relabel "docker_logs" {
     action = "replace"
   }
 
+  // Extract container name (strip leading /)
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex = "/?(.+)"
+    replacement = "$1"
+    target_label = "container"
+    action = "replace"
+  }
+
+  // Copy service to service_name for Grafana compatibility
+  rule {
+    source_labels = ["service"]
+    target_label = "service_name"
+    action = "replace"
+  }
 }
 
 // Collect logs from discovered containers
