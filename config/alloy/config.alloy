@@ -1,13 +1,13 @@
 // Docker container discovery
-// Discovers containers with the label "telemetry.enabled=true"
+// Discovers all containers (filter disabled for testing)
+// To enable filtering, uncomment the filter block and add "telemetry.enabled=true" label to containers
 discovery.docker "containers" {
   host = "unix:///var/run/docker.sock"
-  refresh_interval = "5s"
 
-  filter {
-    name = "label"
-    values = ["telemetry.enabled=true"]
-  }
+  // filter {
+  //   name = "label"
+  //   values = ["telemetry.enabled=true"]
+  // }
 }
 
 // Relabel discovered containers
@@ -21,9 +21,19 @@ discovery.relabel "docker_logs" {
     action = "replace"
   }
 
-  // Extract service name from image
+  // First, set service to full image name without tag as fallback
+  // Removes everything after ':' to strip the tag
+  rule {
+    source_labels = ["__meta_docker_container_image"]
+    regex = "([^:]+):.*"
+    replacement = "$1"
+    target_label = "service"
+    action = "replace"
+  }
+
+  // Then extract just the service name if image matches the registry pattern
   // Format: r2-registry-production.randomanga.workers.dev/ingestion:latest
-  // Extract: ingestion
+  // Extract: ingestion (overrides the fallback if it matches)
   rule {
     source_labels = ["__meta_docker_container_image"]
     regex = ".*/([^:]+):.*"
@@ -45,7 +55,6 @@ loki.source.docker "default" {
   host = "unix:///var/run/docker.sock"
   targets = discovery.relabel.docker_logs.output
   forward_to = [loki.process.json_logs.receiver]
-  refresh_interval = "5s"
 }
 
 // Process JSON logs
