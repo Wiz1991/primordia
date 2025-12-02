@@ -31,20 +31,6 @@ services:
       - observability
     restart: unless-stopped
 
-  vector:
-    image: timberio/vector:0.51.1-debian
-    container_name: vector
-    command: [ "--config", "/etc/vector/vector.yaml" ]
-    volumes:
-      - ../../config/vector/vector.yaml:/etc/vector/vector.yaml:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - vector-data:/var/lib/vector
-    networks:
-      - observability
-    depends_on:
-      - loki
-    restart: unless-stopped
-
   alloy:
     image: grafana/alloy:latest
     container_name: alloy
