@@ -31,42 +31,20 @@ discovery.relabel "docker_logs" {
     action = "replace"
   }
 
-  // Set default service from container name
-  rule {
-    source_labels = ["container"]
-    target_label = "service"
-    action = "replace"
-  }
-
-  // For Docker Compose: override with compose service name
-  // com.docker.compose.service -> com_docker_compose_service
-  rule {
-    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
-    regex = "(.+)"
-    replacement = "$1"
-    target_label = "service"
-    action = "replace"
-  }
-
-  // For Docker Swarm: override with swarm service name
-  // Note: Alloy converts label dots to underscores
-  // com.docker.swarm.service.name -> com_docker_swarm_service_name
-  rule {
-    source_labels = ["__meta_docker_container_label_com_docker_swarm_service_name"]
-    regex = "(.+)"
-    replacement = "$1"
-    target_label = "service"
-    action = "replace"
-  }
-
-  // HIGHEST PRIORITY: Extract from image name for custom registries
-  // Format: r2-registry-production.randomanga.workers.dev/ingestion:latest
-  // Also handles: ingestion:latest (no registry)
-  // Extract: ingestion
-  // This rule runs last to override Swarm/Compose generated names
+  // ALWAYS extract service from image - First pass: match simple format (image_name:tag)
   rule {
     source_labels = ["__meta_docker_container_image"]
-    regex = "(?:.*/)?([^/:]+)(?::.*)?"
+    regex = "^([^/:]+):.*$"
+    replacement = "$1"
+    target_label = "service"
+    action = "replace"
+  }
+
+  // ALWAYS extract service from image - Second pass: match registry format (/image_name:tag)
+  // This takes priority over the first pass
+  rule {
+    source_labels = ["__meta_docker_container_image"]
+    regex = "^.*/([^/:]+):.*$"
     replacement = "$1"
     target_label = "service"
     action = "replace"
@@ -152,39 +130,20 @@ prometheus.exporter.cadvisor "docker_metrics" {
 prometheus.relabel "docker_metrics" {
   forward_to = [prometheus.remote_write.mimir.receiver]
 
-  // Start with container name as fallback
-  rule {
-    source_labels = ["name"]
-    regex = "(.+)"
-    replacement = "$1"
-    target_label = "service"
-    action = "replace"
-  }
-
-  // Override with Docker Compose service name if available
-  rule {
-    source_labels = ["container_label_com_docker_compose_service"]
-    regex = "(.+)"
-    replacement = "$1"
-    target_label = "service"
-    action = "replace"
-  }
-
-  // Override with Docker Swarm service name if available
-  rule {
-    source_labels = ["container_label_com_docker_swarm_service_name"]
-    regex = "(.+)"
-    replacement = "$1"
-    target_label = "service"
-    action = "replace"
-  }
-
-  // HIGHEST PRIORITY: Extract from image name (runs last to override all)
-  // Format: r2-registry-production.randomanga.workers.dev/ingestion:latest -> ingestion
-  // Also handles: ingestion:latest -> ingestion
+  // ALWAYS extract service from image - First pass: match simple format (image_name:tag)
   rule {
     source_labels = ["image"]
-    regex = "(?:.*/)?([^/:]+)(?::.*)?"
+    regex = "^([^/:]+):.*$"
+    replacement = "$1"
+    target_label = "service"
+    action = "replace"
+  }
+
+  // ALWAYS extract service from image - Second pass: match registry format (/image_name:tag)
+  // This takes priority over the first pass
+  rule {
+    source_labels = ["image"]
+    regex = "^.*/([^/:]+):.*$"
     replacement = "$1"
     target_label = "service"
     action = "replace"
