@@ -1,13 +1,14 @@
 // Docker container discovery
-// Discovers all containers (filter disabled for testing)
-// To enable filtering, uncomment the filter block and add "telemetry.enabled=true" label to containers
+// Only discovers containers with telemetry.enabled=true label
+// To add this label to a container, use: --label telemetry.enabled=true
+// For Docker Compose, add under labels: section
 discovery.docker "containers" {
   host = "unix:///var/run/docker.sock"
 
-  // filter {
-  //   name = "label"
-  //   values = ["telemetry.enabled=true"]
-  // }
+  filter {
+    name   = "label"
+    values = ["telemetry.enabled=true"]
+  }
 }
 
 // Relabel discovered containers
@@ -133,6 +134,72 @@ loki.write "loki_endpoint" {
     batch_size = "1MiB"
     batch_wait = "1s"
   }
+}
+
+// Docker container metrics using cAdvisor
+// Collects CPU, memory, network, and disk metrics for all containers
+prometheus.exporter.cadvisor "docker_metrics" {
+  docker_host = "unix:///var/run/docker.sock"
+  storage_duration = "5m"
+
+  // Store container labels to preserve service names and other metadata
+  store_container_labels = true
+}
+
+// Relabel cAdvisor metrics to extract service label (same logic as logs)
+prometheus.relabel "docker_metrics" {
+  forward_to = [prometheus.remote_write.mimir.receiver]
+
+  // Extract service name from container_label_com_docker_compose_service if available
+  rule {
+    source_labels = ["container_label_com_docker_compose_service"]
+    regex = "(.+)"
+    replacement = "$1"
+    target_label = "service"
+    action = "replace"
+  }
+
+  // Fallback: Extract service from container_label_com_docker_swarm_service_name
+  rule {
+    source_labels = ["container_label_com_docker_swarm_service_name"]
+    regex = "(.+)"
+    replacement = "$1"
+    target_label = "service"
+    action = "replace"
+  }
+
+  // Fallback: Extract service from image name
+  // Format: registry.example.com/service:tag -> service
+  rule {
+    source_labels = ["image"]
+    regex = ".*/([^:]+):.*"
+    replacement = "$1"
+    target_label = "service"
+    action = "replace"
+  }
+
+  // Final fallback: Use container name as service
+  rule {
+    source_labels = ["name"]
+    regex = "(.+)"
+    replacement = "$1"
+    target_label = "service"
+    action = "replace"
+  }
+
+  // Copy service to service_name for consistency with logs
+  rule {
+    source_labels = ["service"]
+    target_label = "service_name"
+    action = "replace"
+  }
+}
+
+// Scrape cAdvisor metrics
+prometheus.scrape "cadvisor" {
+  targets = prometheus.exporter.cadvisor.docker_metrics.targets
+  forward_to = [prometheus.relabel.docker_metrics.receiver]
+  scrape_interval = "15s"
 }
 
 // OTLP receiver for traces and metrics
