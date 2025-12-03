@@ -54,6 +54,7 @@ services:
     image: grafana/grafana:latest
     volumes:
       - ../../config/grafana/provisioning/datasources/lgtm.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
+      - ../../config/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
       - ../../config/grafana/grafana.ini:/etc/grafana/grafana.ini:ro
       - grafana-data:/var/lib/grafana
     ports:
