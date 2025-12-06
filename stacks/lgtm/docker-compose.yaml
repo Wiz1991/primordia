@@ -67,6 +67,19 @@ services:
       - loki
       - mimir
     restart: unless-stopped
+  bull-monitor:
+    image: ejhayes/nodejs-bull-monitor:latest
+    ports:
+      - 6464:3000     
+    environment: 
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      BULL_WATCH_QUEUE_PREFIXES: bull
+      UI: bull-master
+      PORT: 3000
+    networks:
+      - dokploy-network
 
 networks:
   observability:
