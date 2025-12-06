@@ -174,3 +174,14 @@ otelcol.exporter.otlp "tempo" {
     }
   }
 }
+
+
+prometheus.scrape "bull-monitor" {
+  targets = [
+    "bull-monitor:3000"
+  ]
+  scrape_interval = "5s"
+
+
+  forward_to = [prometheus.remote_write.mimir.receiver]
+}
