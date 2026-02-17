@@ -34,6 +34,7 @@ services:
       - PGID=1000
       - TZ=Europe/Warsaw
       - VERSION=docker
+      - PLEX_CLAIM=claim-1Pwy4z5AHbq-gxA822tq
     volumes:
       - /srv/docker/plex:/config
     restart: unless-stopped
