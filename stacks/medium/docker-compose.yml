@@ -44,7 +44,7 @@ services:
   cli_debrid:
     image: godver3/cli_debrid:dev
     ports:
-      - "5000:5000"
+      - "5555:5000"
     volumes:
       - /srv/docker/cli_debrid/db_content:/user/db_content
       - /srv/docker/cli_debrid/config:/user/config
