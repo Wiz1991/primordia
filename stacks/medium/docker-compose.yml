@@ -1,7 +1,6 @@
 services: 
   zurg:
     image: ghcr.io/debridmediamanager/zurg-testing:latest    
-    container_name: zurg
     restart: unless-stopped
     volumes:
       - ./config/zurg/config.yml:/app/config.yml
@@ -9,7 +8,6 @@ services:
 
   rclone:
     image: rclone/rclone:latest
-    container_name: rclone
     restart: unless-stopped
     environment:
       TZ: Europe/Warsaw
@@ -30,7 +28,6 @@ services:
 
   plex:
     image: lscr.io/linuxserver/plex:latest
-    container_name: plex
     network_mode: host
     environment:
       - PUID=1000
@@ -46,7 +43,6 @@ services:
 
   cli_debrid:
     image: godver3/cli_debrid:dev
-    container_name: cli_debrid
     ports:
       - "5000:5000"
     volumes:
@@ -69,7 +65,6 @@ services:
 
   bazarr:
     image: lscr.io/linuxserver/bazarr:latest
-    container_name: bazarr
     environment:
       - PUID=1000
       - PGID=1000
@@ -86,7 +81,6 @@ services:
 
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
-    container_name: prowlarr
     environment:
       - PUID=1000
       - PGID=1000
