@@ -73,7 +73,7 @@ services:
       - /srv/docker/bazarr/config:/config
       - /mnt/debrid:/mnt 
     ports:
-      - 6767:6767
+      - 6666:6767
     restart: unless-stopped
     depends_on:
       - cli_debrid
