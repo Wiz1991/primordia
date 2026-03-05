@@ -1,6 +1,6 @@
 services:
   decypharr:
-    image: ghcr.io/sirrobot01/decypharr:latest
+    image: ghcr.io/sirrobot01/decypharr:v1.1.6
     container_name: decypharr
     environment:
       - PUID=${PUID}
