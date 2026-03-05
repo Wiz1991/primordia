@@ -36,7 +36,8 @@ certificatesResolvers:
       storage: /etc/traefik/acme/acme.json
       dnsChallenge:
         provider: cloudflare
-        delayCheck: 10
+        propagation:
+          delayBeforeChecks: 10
         resolvers:
           - "1.1.1.1:53"
           - "1.0.0.1:53"
