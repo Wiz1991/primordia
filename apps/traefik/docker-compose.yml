@@ -1,0 +1,37 @@
+services:
+  traefik:
+    image: traefik:v3.3
+    container_name: traefik
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - TZ=${TZ}
+      - ACME_EMAIL=${ACME_EMAIL}
+      - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./config/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./config/dynamic:/etc/traefik/dynamic:ro
+      - ${APPDATA_DIR}/traefik/acme:/etc/traefik/acme
+      - ${APPDATA_DIR}/traefik/logs:/var/log/traefik
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN_NAME}`)
+      - traefik.http.routers.traefik.entrypoints=websecure
+      - traefik.http.routers.traefik.tls.certresolver=letsencrypt
+      - traefik.http.routers.traefik.service=api@internal
+      - traefik.http.routers.traefik.middlewares=security-headers@file
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    networks:
+      - traefik
+    restart: unless-stopped
+
+networks:
+  traefik:
+    name: traefik
