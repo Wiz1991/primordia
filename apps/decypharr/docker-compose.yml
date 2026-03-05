@@ -2,8 +2,6 @@ services:
   decypharr:
     image: ghcr.io/sirrobot01/decypharr:latest
     container_name: decypharr
-    ports:
-      - "8282:8282"
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
@@ -18,4 +16,23 @@ services:
       - SYS_ADMIN
     security_opt:
       - apparmor:unconfined
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.decypharr.rule=Host(`decypharr.${DOMAIN_NAME}`)
+      - traefik.http.routers.decypharr.entrypoints=websecure
+      - traefik.http.routers.decypharr.tls.certresolver=letsencrypt
+      - traefik.http.routers.decypharr.middlewares=security-headers@file
+      - traefik.http.services.decypharr.loadbalancer.server.port=8282
+    healthcheck:
+      test: ["CMD", "/usr/bin/healthcheck", "--config", "/app/"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - traefik
     restart: unless-stopped
+
+networks:
+  traefik:
+    external: true

@@ -1,9 +1,66 @@
 include:
+  - apps/traefik/docker-compose.yml
   - apps/bazarr/docker-compose.yml
   - apps/decypharr/docker-compose.yml
   - apps/plex/docker-compose.yml
   - apps/profilarr/docker-compose.yml
   - apps/prowlarr/docker-compose.yml
   - apps/radarr/docker-compose.yml
+  - apps/seerr/docker-compose.yml
   - apps/sonarr_anime/docker-compose.yml
   - apps/sonarr_tv/docker-compose.yml
+
+services:
+  prowlarr:
+    depends_on:
+      traefik:
+        condition: service_healthy
+
+  decypharr:
+    depends_on:
+      traefik:
+        condition: service_healthy
+
+  profilarr:
+    depends_on:
+      traefik:
+        condition: service_healthy
+
+  radarr:
+    depends_on:
+      traefik:
+        condition: service_healthy
+      prowlarr:
+        condition: service_healthy
+
+  sonarr_anime:
+    depends_on:
+      traefik:
+        condition: service_healthy
+      prowlarr:
+        condition: service_healthy
+
+  sonarr_tv:
+    depends_on:
+      traefik:
+        condition: service_healthy
+      prowlarr:
+        condition: service_healthy
+
+  bazarr:
+    depends_on:
+      radarr:
+        condition: service_healthy
+      sonarr_anime:
+        condition: service_healthy
+      sonarr_tv:
+        condition: service_healthy
+
+  seerr:
+    depends_on:
+      radarr:
+        condition: service_healthy
+      sonarr_anime:
+        condition: service_healthy
+      sonarr_tv:
+        condition: service_healthy

@@ -8,4 +8,23 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
-    
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.profilarr.rule=Host(`profilarr.${DOMAIN_NAME}`)
+      - traefik.http.routers.profilarr.entrypoints=websecure
+      - traefik.http.routers.profilarr.tls.certresolver=letsencrypt
+      - traefik.http.routers.profilarr.middlewares=security-headers@file
+      - traefik.http.services.profilarr.loadbalancer.server.port=6868
+    healthcheck:
+      test: curl -f http://localhost:6868/ || exit 1
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - traefik
+    restart: unless-stopped
+
+networks:
+  traefik:
+    external: true
