@@ -37,7 +37,7 @@ certificatesResolvers:
       dnsChallenge:
         provider: cloudflare
         propagation:
-          delayBeforeChecks: 10
+          delayBeforeChecks: 10s
         resolvers:
           - "1.1.1.1:53"
           - "1.0.0.1:53"
