@@ -33,7 +33,6 @@ entryPoints:
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: ${ACME_EMAIL}
       storage: /etc/traefik/acme/acme.json
       dnsChallenge:
         provider: cloudflare
