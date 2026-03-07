@@ -9,6 +9,7 @@ include:
   - apps/seerr/docker-compose.yml
   - apps/newtarr/docker-compose.yml
   - apps/sonarr/docker-compose.yml
+  - apps/tautulli/docker-compose.yml
   - apps/byparr/docker-compose.yml
   - apps/zilean/docker-compose.yml
 
@@ -71,6 +72,13 @@ services:
         condition: service_healthy
       sonarr_tv:
         condition: service_healthy
+
+  tautulli:
+    depends_on:
+      traefik:
+        condition: service_healthy
+      plex:
+        condition: service_started
 
   seerr:
     depends_on:

@@ -1,0 +1,30 @@
+services:
+  tautulli:
+    image: lscr.io/linuxserver/tautulli:2.16.1
+    container_name: tautulli
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${APPDATA_DIR}/tautulli:/config
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.tautulli.rule=Host(`tautulli.${DOMAIN_NAME}`)
+      - traefik.http.routers.tautulli.entrypoints=websecure
+      - traefik.http.routers.tautulli.tls.certresolver=letsencrypt
+      - traefik.http.routers.tautulli.middlewares=security-headers@file
+      - traefik.http.services.tautulli.loadbalancer.server.port=8181
+    healthcheck:
+      test: curl -f http://localhost:8181/status || exit 1
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - traefik
+    restart: unless-stopped
+
+networks:
+  traefik:
+    external: true
