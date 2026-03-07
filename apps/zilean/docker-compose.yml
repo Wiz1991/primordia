@@ -1,0 +1,52 @@
+services:
+  zilean:
+    image: ipromknight/zilean:latest
+    restart: unless-stopped
+    container_name: zilean
+    tty: true
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - zilean_data:/app/data
+      - zilean_tmp:/tmp
+    healthcheck:
+      test: curl --connect-timeout 10 --silent --show-error --fail http://localhost:8181/healthchecks/ping
+      timeout: 60s
+      interval: 30s
+      retries: 10
+    depends_on:
+      zilean_postgres:
+        condition: service_healthy
+    networks:
+      - traefik
+
+  zilean_postgres:
+    image: postgres:17.2-alpine
+    container_name: zilean_postgres
+    restart: unless-stopped
+    shm_size: 2G
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: zilean
+    volumes:
+      - postgres_data_zilean:/var/lib/postgresql/data/pgdata
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - traefik
+
+
+volumes:
+  zilean_data:
+  zilean_tmp:
+  postgres_data_zilean:
+
+
+networks:
+  traefik:
+    external: true
