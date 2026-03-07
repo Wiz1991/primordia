@@ -71,6 +71,7 @@ docker compose restart prowlarr
 | `ACME_EMAIL`       | Let's Encrypt registration email                                         |
 | `CF_DNS_API_TOKEN` | Cloudflare API token (Zone > DNS > Edit)                                 |
 | `PLEX_CLAIM`       | One-time claim token from [https://plex.tv/claim](https://plex.tv/claim) |
+| `POSTGRES_PASSWORD`| Postgres password for setting up zilean                                  |
 
 
 ## Decypharr config
