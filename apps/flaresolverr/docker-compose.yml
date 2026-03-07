@@ -1,0 +1,22 @@
+services:
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:v3.3.19
+    container_name: flaresolverr
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_HTML=false
+      - CAPTCHA_SOLVER=none
+      - TZ=${TZ}
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8191/health || exit 1
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - traefik
+    restart: unless-stopped
+
+networks:
+  traefik:
+    external: true
