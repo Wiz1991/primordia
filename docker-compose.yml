@@ -8,8 +8,7 @@ include:
   - apps/radarr/docker-compose.yml
   - apps/seerr/docker-compose.yml
   - apps/newtarr/docker-compose.yml
-  - apps/sonarr_anime/docker-compose.yml
-  - apps/sonarr_tv/docker-compose.yml
+  - apps/sonarr/docker-compose.yml
 
 services:
   prowlarr:
