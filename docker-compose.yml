@@ -11,6 +11,12 @@ include:
   - apps/sonarr/docker-compose.yml
 
 services:
+  plex:
+    depends_on:
+      traefik:
+        condition: service_healthy
+      decypharr:
+        condition: service_healthy
   prowlarr:
     depends_on:
       traefik:
