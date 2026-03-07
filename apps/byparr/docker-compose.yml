@@ -6,11 +6,11 @@ services:
       - LOG_LEVEL=debug
       - TZ=${TZ}
     healthcheck:
-      test: curl -f http://localhost:8191/health || exit 1
-      interval: 15s
-      timeout: 5s
+      test: ["CMD", "curl", "-sf", "--max-time", "15", "http://localhost:8191/health"]
+      interval: 30s
+      timeout: 30s
       retries: 5
-      start_period: 15s
+      start_period: 30s
     networks:
       - traefik
     restart: unless-stopped
