@@ -3,7 +3,7 @@ services:
     image: ghcr.io/flaresolverr/flaresolverr:v3.3.19
     container_name: flaresolverr
     environment:
-      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_LEVEL=debug
       - LOG_HTML=false
       - CAPTCHA_SOLVER=none
       - TZ=${TZ}
