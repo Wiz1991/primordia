@@ -9,6 +9,7 @@ include:
   - apps/seerr/docker-compose.yml
   - apps/newtarr/docker-compose.yml
   - apps/sonarr/docker-compose.yml
+  - apps/flaresolverr/docker-compose.yml
 
 services:
   plex:
@@ -17,9 +18,16 @@ services:
         condition: service_healthy
       decypharr:
         condition: service_healthy
+  flaresolverr:
+    depends_on:
+      traefik:
+        condition: service_healthy
+
   prowlarr:
     depends_on:
       traefik:
+        condition: service_healthy
+      flaresolverr:
         condition: service_healthy
 
   decypharr:
