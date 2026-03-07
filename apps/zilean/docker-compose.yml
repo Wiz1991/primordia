@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - zilean_data:/app/data
+      - ${APPDATA_DIR}/zilean:/app/data
       - zilean_tmp:/tmp
     healthcheck:
       test: curl --connect-timeout 10 --silent --show-error --fail http://localhost:8181/healthchecks/ping
@@ -42,7 +42,6 @@ services:
 
 
 volumes:
-  zilean_data:
   zilean_tmp:
   postgres_data_zilean:
 
