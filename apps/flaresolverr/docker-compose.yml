@@ -1,11 +1,9 @@
 services:
   flaresolverr:
-    image: ghcr.io/flaresolverr/flaresolverr:v3.3.9
+    image: ghcr.io/thephaseless/byparr:latest
     container_name: flaresolverr
     environment:
       - LOG_LEVEL=debug
-      - LOG_HTML=false
-      - CAPTCHA_SOLVER=none
       - TZ=${TZ}
     healthcheck:
       test: wget --no-verbose --tries=1 --spider http://localhost:8191/health || exit 1
