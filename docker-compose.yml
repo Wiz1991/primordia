@@ -62,10 +62,9 @@ services:
     depends_on:
       radarr:
         condition: service_healthy
-      sonarr_anime:
+      sonarr:
         condition: service_healthy
-      sonarr_tv:
-        condition: service_healthy
+
 
   tautulli:
     depends_on:
@@ -78,7 +77,5 @@ services:
     depends_on:
       radarr:
         condition: service_healthy
-      sonarr_anime:
-        condition: service_healthy
-      sonarr_tv:
+      sonarr:
         condition: service_healthy
