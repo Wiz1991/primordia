@@ -19,6 +19,7 @@ include:
   - apps/exportarr/docker-compose.yml
   - apps/restic/docker-compose.yml
   - apps/adguard/docker-compose.yml
+  - apps/anibridge/docker-compose.yml
 
 services:
   loki:
@@ -144,4 +145,9 @@ services:
       sonarr_anime:
         condition: service_healthy
       sonarr_tv:
+        condition: service_healthy
+
+  anibridge:
+    depends_on:
+      traefik:
         condition: service_healthy
