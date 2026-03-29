@@ -24,6 +24,7 @@ include:
   - apps/restic/docker-compose.yml
   - apps/adguard/docker-compose.yml
   - apps/anibridge/docker-compose.yml
+  - apps/watchtower/docker-compose.yml
   - apps/mihon-gateway/docker-compose.yml
   - apps/moe-radar/docker-compose.yml
 

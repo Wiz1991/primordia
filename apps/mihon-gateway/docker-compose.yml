@@ -3,6 +3,8 @@ services:
     image: ghcr.io/wiz1991/mihon-gateway:latest
     container_name: mihon-gateway
     restart: unless-stopped
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
     environment:
       - GRPC_PORT=50051
       - JAVA_OPTS=-Xmx512m -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0

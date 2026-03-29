@@ -1,8 +1,10 @@
 x-workerd: &workerd-base
   image: r2-registry-production.randomanga.workers.dev/workerd
   restart: unless-stopped
+  stop_grace_period: 65s
   labels: &workerd-labels
     moe.radar.service: workerd
+    com.centurylinklabs.watchtower.enable: "true"
   environment: &workerd-env
     NODE_ENV: production
     DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@pgvector:5432/moe_radar
