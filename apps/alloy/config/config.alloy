@@ -20,25 +20,31 @@ discovery.relabel "containers" {
     source_labels = ["__meta_docker_compose_project"]
     target_label  = "project"
   }
-
-  // containers with moe.radar.service label: override service_name, extract process from container name
-  rule {
-    source_labels = ["__meta_docker_container_label_moe_radar_service"]
-    regex         = "(.+)"
-    target_label  = "service_name"
-  }
-
-  rule {
-    source_labels = ["__meta_docker_container_name"]
-    regex         = "/?workerd-(.*)"
-    target_label  = "process"
-  }
 }
 
 loki.source.docker "containers" {
   host       = "unix:///var/run/docker.sock"
   targets    = discovery.relabel.containers.output
+  forward_to = [loki.relabel.normalize.receiver]
+}
+
+// Rewrite stream labels after loki.source.docker sets them
+loki.relabel "normalize" {
   forward_to = [loki.process.pipeline.receiver]
+
+  // workerd-* containers: group under service_name=workerd, extract process
+  rule {
+    source_labels = ["service_name"]
+    regex         = "workerd-(.*)"
+    target_label  = "process"
+  }
+
+  rule {
+    source_labels = ["service_name"]
+    regex         = "workerd-.*"
+    target_label  = "service_name"
+    replacement   = "workerd"
+  }
 }
 
 loki.process "pipeline" {
