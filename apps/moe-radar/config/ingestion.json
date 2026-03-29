@@ -1,7 +1,7 @@
 {
   "workers": {
     "ingestion.crawl": {
-      "concurrency": 1,
+      "concurrency": 10,
       "lockDuration": 60000
     },
     "ingestion.details": {
