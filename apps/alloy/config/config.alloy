@@ -12,11 +12,6 @@ discovery.relabel "containers" {
   }
 
   rule {
-    source_labels = ["__meta_docker_compose_service"]
-    target_label  = "service_name"
-  }
-
-  rule {
     source_labels = ["__meta_docker_compose_project"]
     target_label  = "project"
   }
@@ -25,29 +20,39 @@ discovery.relabel "containers" {
 loki.source.docker "containers" {
   host       = "unix:///var/run/docker.sock"
   targets    = discovery.relabel.containers.output
-  forward_to = [loki.relabel.normalize.receiver]
-}
-
-// Rewrite stream labels after loki.source.docker sets them
-loki.relabel "normalize" {
   forward_to = [loki.process.pipeline.receiver]
-
-  // workerd-* containers: group under service_name=workerd, extract process
-  rule {
-    source_labels = ["service_name"]
-    regex         = "workerd-(.*)"
-    target_label  = "process"
-  }
-
-  rule {
-    source_labels = ["service_name"]
-    regex         = "workerd-.*"
-    target_label  = "service_name"
-    replacement   = "workerd"
-  }
 }
 
 loki.process "pipeline" {
+  // Group workerd-* containers under service_name=workerd with process label
+  stage.match {
+    selector = "{app=\"workerd-scheduler\"}"
+    stage.static_labels {
+      values = { service_name = "workerd", process = "scheduler" }
+    }
+  }
+
+  stage.match {
+    selector = "{app=\"workerd-catalog\"}"
+    stage.static_labels {
+      values = { service_name = "workerd", process = "catalog" }
+    }
+  }
+
+  stage.match {
+    selector = "{app=\"workerd-ingestion\"}"
+    stage.static_labels {
+      values = { service_name = "workerd", process = "ingestion" }
+    }
+  }
+
+  stage.match {
+    selector = "{app=\"workerd-matching\"}"
+    stage.static_labels {
+      values = { service_name = "workerd", process = "matching" }
+    }
+  }
+
   // workerd containers: pino JSON with numeric levels
   stage.match {
     selector = "{service_name=\"workerd\"}"
