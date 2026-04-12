@@ -8,11 +8,7 @@ services:
       - URL=http://sonarr:8989
       - APIKEY=${SONARR_API_KEY}
     healthcheck:
-      test: wget --no-verbose --tries=1 --spider http://localhost:9707/healthz || exit 1
-      interval: 30s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+      disable: true
     networks:
       - traefik
     restart: unless-stopped
@@ -26,11 +22,7 @@ services:
       - URL=http://radarr:7878
       - APIKEY=${RADARR_API_KEY}
     healthcheck:
-      test: wget --no-verbose --tries=1 --spider http://localhost:9708/healthz || exit 1
-      interval: 30s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+      disable: true
     networks:
       - traefik
     restart: unless-stopped
@@ -44,11 +36,7 @@ services:
       - URL=http://prowlarr:9696
       - APIKEY=${PROWLARR_API_KEY}
     healthcheck:
-      test: wget --no-verbose --tries=1 --spider http://localhost:9709/healthz || exit 1
-      interval: 30s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+      disable: true
     networks:
       - traefik
     restart: unless-stopped
@@ -62,11 +50,7 @@ services:
       - URL=http://bazarr:6767
       - APIKEY=${BAZARR_API_KEY}
     healthcheck:
-      test: wget --no-verbose --tries=1 --spider http://localhost:9710/healthz || exit 1
-      interval: 30s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+      disable: true
     networks:
       - traefik
     restart: unless-stopped
