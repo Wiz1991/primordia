@@ -25,11 +25,12 @@
       "refresh_interval": 15
     },
     "repair": {
+      "enabled": true,
       "interval": "6h",
       "auto_process": true,
-      "use_webdav": true,
+      "use_webdav": false,
       "workers": 1,
-      "strategy": "per_torrent"
+      "strategy": "per_file"
     },
     "webdav": {},
     "rclone": {
